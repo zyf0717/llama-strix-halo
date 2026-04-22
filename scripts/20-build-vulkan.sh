@@ -24,6 +24,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 LLAMA_DIR="$REPO_ROOT/third_party/llama.cpp"
 BUILD_DIR="$LLAMA_DIR/build-vulkan"
+FETCH_SCRIPT="$REPO_ROOT/scripts/10-fetch-llamacpp.sh"
 
 BUILD_TYPE="${BUILD_TYPE:-Release}"
 CLEAN="${CLEAN:-0}"
@@ -68,22 +69,13 @@ install_deps() {
 }
 
 ensure_llamacpp() {
-  mkdir -p "$REPO_ROOT/third_party"
-
-  if [[ -d "$LLAMA_DIR/.git" ]]; then
-    echo "Found llama.cpp checkout."
-    return
+  if [[ ! -x "$FETCH_SCRIPT" ]]; then
+    echo "ERROR: missing helper script: $FETCH_SCRIPT"
+    exit 1
   fi
 
-  if [[ -f "$REPO_ROOT/.gitmodules" ]] && grep -q "third_party/llama.cpp" "$REPO_ROOT/.gitmodules"; then
-    echo "Initializing llama.cpp submodule..."
-    git -C "$REPO_ROOT" submodule update --init --recursive third_party/llama.cpp
-    return
-  fi
-
-  echo "No llama.cpp checkout or submodule found."
-  echo "Cloning upstream llama.cpp into third_party/llama.cpp..."
-  git clone https://github.com/ggml-org/llama.cpp.git "$LLAMA_DIR"
+  echo "Ensuring pinned llama.cpp checkout..."
+  "$FETCH_SCRIPT"
 }
 
 check_vulkan_tools() {

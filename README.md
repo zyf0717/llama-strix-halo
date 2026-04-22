@@ -35,12 +35,12 @@ llama-strix-halo/
 
 5. Run benchmarks or serve models:
 
-    - Benchmark: `./scripts/30-bench.sh` (creates `results/YYYYMMDD_HHMMSS.log`)
-    - Serve model: `./scripts/40-load-model.sh` (starts `llama-server` using `nohup`, logs to `results/`)
+    - Benchmark: `./scripts/30-bench.sh` (creates `results/YYYYMMDD_HHMMSS.log` and `results/YYYYMMDD_HHMMSS.env.txt`)
+    - Serve model: `./scripts/40-load-model.sh` (starts `llama-server` using `nohup`, logs to `results/` and writes a matching `.env.txt` capture)
 
 ## Scripts
 
-- `scripts/00-capture-env.sh` — capture environment details (placeholder).
+- `scripts/00-capture-env.sh` — captures run metadata, git state, runtime vars, and available system/GPU/Vulkan details into `results/<timestamp>.env.txt`.
 - `scripts/10-fetch-llamacpp.sh` — add/init `third_party/llama.cpp` submodule. Use `LLAMACPP_REF` in `.env` to pin a specific commit.
 - `scripts/20-build-vulkan.sh`, `21-build-hip.sh` (placeholder) — platform build helpers.
 - `scripts/30-bench.sh` — runs `llama-bench`. Logs to `results/<timestamp>.log`. Configurable via `.env`:
@@ -64,6 +64,11 @@ llama-strix-halo/
 
 - Alternatively, set `MODEL_DIR` in your `.env` to point to a shared model directory on your machine (preferred for portability).
 
+## `.env` format
+
+- The helper scripts read `.env` as simple `KEY=VALUE` data, not as a shell script.
+- Supported lines are blank lines, `#` comments, and `KEY=VALUE` assignments with optional single or double quotes.
+
 ## Submodule pinning
 
 - The `third_party/llama.cpp` gitlink in the superproject pins the exact commit to use. To update:
@@ -77,7 +82,9 @@ llama-strix-halo/
 
 ## Logs
 
-- Benchmark and server output are written to `results/` with filenames in `YYYYMMDD_HHMMSS.log` format. Use `tail -f results/<latest>.log` to inspect.
+- Benchmark and server output are written to `results/` with filenames in `YYYYMMDD_HHMMSS.log` format.
+- Each benchmark/server run also writes `results/YYYYMMDD_HHMMSS.env.txt` with the resolved command, model path, git revisions, runtime env, and available system diagnostics.
+- Use `tail -f results/<latest>.log` to inspect the live run output.
 
 ## Contributing / Notes
 

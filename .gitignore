@@ -9,6 +9,8 @@ cmake-build-*/
 out/
 bin/
 lib/
+!scripts/lib/
+!scripts/lib/*.sh
 
 # CMake
 CMakeCache.txt

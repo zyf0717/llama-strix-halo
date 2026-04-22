@@ -8,14 +8,10 @@ submodule_path="third_party/llama.cpp"
 submodule_url="https://github.com/ggml-org/llama.cpp"
 default_llamacpp_ref="0dedb9ef7a71fcebfa6fb17e0d6e6abd6e893376"
 
-cd "${repo_root}"
+source "${script_dir}/lib/load-env.sh"
 
-if [[ -f .env ]]; then
-	set -a
-	# shellcheck disable=SC1091
-	source .env
-	set +a
-fi
+cd "${repo_root}"
+load_env_file "${repo_root}/.env"
 
 llamacpp_ref="${LLAMACPP_REF:-${default_llamacpp_ref}}"
 

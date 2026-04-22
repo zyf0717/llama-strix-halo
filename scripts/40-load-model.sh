@@ -5,24 +5,21 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/.." && pwd)"
 default_model_dir="${repo_root}/models"
-default_model="${default_model_dir}/Qwen_Qwen3-Coder-Next-Q5_K_M-00001-of-00002.gguf"
+default_model_name="Qwen_Qwen3-Coder-Next-Q5_K_M-00001-of-00002.gguf"
 default_llama_server_bin="${repo_root}/third_party/llama.cpp/build-vulkan/bin/llama-server"
 default_results_dir="${repo_root}/results"
+capture_env_script="${repo_root}/scripts/00-capture-env.sh"
+
+source "${script_dir}/lib/load-env.sh"
 
 cd "${repo_root}"
-
-if [[ -f .env ]]; then
-	set -a
-	# shellcheck disable=SC1091
-	source .env
-	set +a
-fi
+load_env_file "${repo_root}/.env"
 
 export GGML_VK_VISIBLE_DEVICES="${GGML_VK_VISIBLE_DEVICES:-0}"
 export AMD_VULKAN_ICD="${AMD_VULKAN_ICD:-RADV}"
 
 model_dir="${MODEL_DIR:-${default_model_dir}}"
-model="${MODEL:-${default_model}}"
+model="${MODEL:-${model_dir}/${default_model_name}}"
 llama_server_bin="${LLAMA_SERVER_BIN:-${default_llama_server_bin}}"
 results_dir="${RESULTS_DIR:-${default_results_dir}}"
 ngl="${LLAMA_SERVER_NGL:-999}"
@@ -36,6 +33,7 @@ alias_name="${LLAMA_SERVER_ALIAS:-Qwen/Qwen3-Coder-Next-Q5_K_M}"
 flash_attn="${LLAMA_SERVER_FLASH_ATTN:-on}"
 timestamp="$(date +%Y%m%d_%H%M%S)"
 log_file="${results_dir}/${timestamp}.log"
+capture_file="${results_dir}/${timestamp}.env.txt"
 
 if [[ ! -x "${llama_server_bin}" ]]; then
 	echo "llama-server binary not found or not executable: ${llama_server_bin}" >&2
@@ -66,8 +64,31 @@ command=(
 	"$@"
 )
 
+printf -v command_str '%q ' "${command[@]}"
+
+RUN_KIND=server \
+RUN_TIMESTAMP="${timestamp}" \
+RUN_LOG_FILE="${log_file}" \
+MODEL_PATH="${model}" \
+LLAMA_BIN_PATH="${llama_server_bin}" \
+RUN_COMMAND="${command_str% }" \
+MODEL_DIR="${model_dir}" \
+MODEL="${model}" \
+LLAMA_SERVER_BIN="${llama_server_bin}" \
+LLAMA_SERVER_NGL="${ngl}" \
+LLAMA_SERVER_CTX="${context_size}" \
+LLAMA_SERVER_THREADS="${threads}" \
+LLAMA_SERVER_BATCH="${batch_size}" \
+LLAMA_SERVER_UBATCH="${ubatch_size}" \
+LLAMA_SERVER_HOST="${host}" \
+LLAMA_SERVER_PORT="${port}" \
+LLAMA_SERVER_ALIAS="${alias_name}" \
+LLAMA_SERVER_FLASH_ATTN="${flash_attn}" \
+"${capture_env_script}" "${capture_file}" >/dev/null
+
 "${command[@]}" > "${log_file}" 2>&1 &
 server_pid=$!
 
 echo "llama-server started with PID ${server_pid}"
 echo "log file: ${log_file}"
+echo "env capture: ${capture_file}"
