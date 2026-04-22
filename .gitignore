@@ -1,0 +1,49 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# C++ / build directories
+build/
+cmake-build-*/
+out/
+bin/
+lib/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+Makefile
+install_manifest.txt
+
+# Generated objects and libraries
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.lib
+*.so
+*.so.*
+*.dll
+*.dylib
+*.exe
+*.out
+
+# Debug / profiling artifacts
+*.dSYM/
+*.gcda
+*.gcno
+*.gcov
+*.prof
+*.profraw
+*.profdata
+
+# Editors and OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
