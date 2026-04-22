@@ -31,11 +31,11 @@ write_section() {
 }
 
 maybe_run() {
-	[[ $# -gt 0 ]] || return
-	[[ -n "${1}" ]] || return
+	[[ $# -gt 0 ]] || return 0
+	[[ -n "${1}" ]] || return 0
 
 	if ! command -v "$1" >/dev/null 2>&1; then
-		return
+		return 0
 	fi
 
 	printf '$ %s\n' "$*"
