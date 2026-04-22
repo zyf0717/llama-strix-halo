@@ -47,3 +47,6 @@ install_manifest.txt
 Thumbs.db
 .vscode/
 .idea/
+
+# Log files
+*.log
