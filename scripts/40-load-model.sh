@@ -22,6 +22,7 @@ model_dir="${MODEL_DIR:-${default_model_dir}}"
 model="${MODEL:-${model_dir}/${default_model_name}}"
 llama_server_bin="${LLAMA_SERVER_BIN:-${default_llama_server_bin}}"
 results_dir="${RESULTS_DIR:-${default_results_dir}}"
+pid_file="${results_dir}/llama-server.pid"
 ngl="${LLAMA_SERVER_NGL:-999}"
 context_size="${LLAMA_SERVER_CTX:-130000}"
 threads="${LLAMA_SERVER_THREADS:-8}"
@@ -46,6 +47,49 @@ if [[ ! -e "${model}" ]]; then
 fi
 
 mkdir -p "${results_dir}"
+
+stop_previous_server() {
+	local pid
+	local -a existing_pids=()
+
+	if [[ -f "${pid_file}" ]]; then
+		mapfile -t existing_pids < "${pid_file}"
+	fi
+
+	while IFS= read -r pid; do
+		existing_pids+=("${pid}")
+	done < <(
+		ps -eo pid=,args= | awk -v bin="${llama_server_bin}" -v port="${port}" '
+			index($0, bin) && index($0, "--port " port) { print $1 }
+		'
+	)
+
+	for pid in "${existing_pids[@]}"; do
+		[[ -n "${pid}" ]] || continue
+		if ! kill -0 "${pid}" 2>/dev/null; then
+			continue
+		fi
+
+		echo "stopping previous llama-server PID ${pid}"
+		kill "${pid}" 2>/dev/null || true
+
+		for _ in {1..20}; do
+			if ! kill -0 "${pid}" 2>/dev/null; then
+				break
+			fi
+			sleep 0.25
+		done
+
+		if kill -0 "${pid}" 2>/dev/null; then
+			echo "force killing previous llama-server PID ${pid}"
+			kill -9 "${pid}" 2>/dev/null || true
+		fi
+	done
+
+	rm -f "${pid_file}"
+}
+
+stop_previous_server
 
 command=(
 	nohup
@@ -88,6 +132,7 @@ LLAMA_SERVER_FLASH_ATTN="${flash_attn}" \
 
 "${command[@]}" > "${log_file}" 2>&1 &
 server_pid=$!
+printf '%s\n' "${server_pid}" > "${pid_file}"
 
 echo "llama-server started with PID ${server_pid}"
 echo "log file: ${log_file}"
