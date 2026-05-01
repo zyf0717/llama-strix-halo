@@ -14,7 +14,7 @@ source "${script_dir}/lib/load-env.sh"
 cd "${repo_root}"
 load_env_file "${repo_root}/.env"
 
-llama_cpp_backend="${LLAMA_CPP_BACKEND:-hip}"
+llama_cpp_backend="${LLAMA_CPP_BACKEND:-vulkan}"
 
 export GGML_LOG_LEVEL="${GGML_LOG_LEVEL:-2}"
 export GGML_VK_VISIBLE_DEVICES="${GGML_VK_VISIBLE_DEVICES:-0}"
