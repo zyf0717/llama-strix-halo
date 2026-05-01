@@ -6,6 +6,24 @@ trim_trailing_whitespace() {
 	printf '%s' "${value}"
 }
 
+resolve_llama_cpp_build_dir() {
+	local repo_root="$1"
+	local backend="${2:-hip}"
+
+	case "${backend}" in
+		hip)
+			printf '%s' "${repo_root}/third_party/llama.cpp/build-hip"
+			;;
+		vulkan)
+			printf '%s' "${repo_root}/third_party/llama.cpp/build-vulkan"
+			;;
+		*)
+			echo "unsupported LLAMA_CPP_BACKEND: ${backend} (expected: hip or vulkan)" >&2
+			return 1
+			;;
+	esac
+}
+
 load_env_file() {
 	local env_file="${1:-.env}"
 	local line=""

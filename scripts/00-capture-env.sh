@@ -65,6 +65,7 @@ maybe_run() {
 	write_kv "AMD_VULKAN_ICD" "${AMD_VULKAN_ICD:-}"
 	write_kv "GGML_LOG_LEVEL" "${GGML_LOG_LEVEL:-}"
 	write_kv "GGML_VK_VISIBLE_DEVICES" "${GGML_VK_VISIBLE_DEVICES:-}"
+	write_kv "LLAMA_CPP_BACKEND" "${LLAMA_CPP_BACKEND:-}"
 	write_kv "MODEL_DIR" "${MODEL_DIR:-}"
 	write_kv "MODEL" "${MODEL:-}"
 	write_kv "LLAMACPP_REF" "${LLAMACPP_REF:-}"

@@ -6,7 +6,6 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/.." && pwd)"
 default_model_dir="${repo_root}/models"
 default_model_name="gpt-oss-120b-MXFP4-00001-of-00002.gguf"
-default_llama_server_bin="${repo_root}/third_party/llama.cpp/build-vulkan/bin/llama-server"
 default_results_dir="${repo_root}/results"
 capture_env_script="${repo_root}/scripts/00-capture-env.sh"
 
@@ -15,12 +14,19 @@ source "${script_dir}/lib/load-env.sh"
 cd "${repo_root}"
 load_env_file "${repo_root}/.env"
 
+llama_cpp_backend="${LLAMA_CPP_BACKEND:-hip}"
+
 export GGML_VK_VISIBLE_DEVICES="${GGML_VK_VISIBLE_DEVICES:-0}"
 export AMD_VULKAN_ICD="${AMD_VULKAN_ICD:-RADV}"
 
 model_dir="${MODEL_DIR:-${default_model_dir}}"
 model="${MODEL:-${model_dir}/${default_model_name}}"
-llama_server_bin="${LLAMA_SERVER_BIN:-${default_llama_server_bin}}"
+if [[ -n "${LLAMA_SERVER_BIN:-}" ]]; then
+	llama_server_bin="${LLAMA_SERVER_BIN}"
+else
+	llama_cpp_build_dir="$(resolve_llama_cpp_build_dir "${repo_root}" "${llama_cpp_backend}")"
+	llama_server_bin="${llama_cpp_build_dir}/bin/llama-server"
+fi
 results_dir="${RESULTS_DIR:-${default_results_dir}}"
 ngl="${LLAMA_SERVER_NGL:-999}"
 context_size="${LLAMA_SERVER_CTX:-130000}"
@@ -113,6 +119,7 @@ LLAMA_BIN_PATH="${llama_server_bin}" \
 RUN_COMMAND="${command_str% }" \
 MODEL_DIR="${model_dir}" \
 MODEL="${model}" \
+LLAMA_CPP_BACKEND="${llama_cpp_backend}" \
 LLAMA_SERVER_BIN="${llama_server_bin}" \
 LLAMA_SERVER_NGL="${ngl}" \
 LLAMA_SERVER_CTX="${context_size}" \
