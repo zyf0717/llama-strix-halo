@@ -29,7 +29,7 @@ llama-strix-halo/
 
     ./scripts/10-fetch-llamacpp.sh
 
-3. Build `llama.cpp` according to its README (or use the provided placeholders `scripts/20-build-vulkan.sh` / `scripts/21-build-hip.sh`). The built binaries appear under `third_party/llama.cpp/build-*/bin/` (e.g. `llama-bench`, `llama-server`).
+3. Build `llama.cpp` according to its README or use the provided helpers. For HIP/ROCm builds, install ROCm once with `scripts/01-install-rocm-ubuntu.sh`, reboot or log out/in, then run `scripts/21-build-hip.sh`. For Vulkan/RADV builds, run `scripts/20-build-vulkan.sh`. The built binaries appear under `third_party/llama.cpp/build-*/bin/` (e.g. `llama-bench`, `llama-server`).
 
 4. Add or link your GGUF model shards under `models/` (see Models section).
 
@@ -41,8 +41,9 @@ llama-strix-halo/
 ## Scripts
 
 - `scripts/00-capture-env.sh` — captures run metadata, git state, runtime vars, and available system/GPU/Vulkan details into `results/<timestamp>.env.txt`.
+- `scripts/01-install-rocm-ubuntu.sh` — configures AMD ROCm apt repositories on Ubuntu and installs the HIP build packages. Set `INSTALL_FULL_ROCM=1` only when you want the full `rocm` meta-package.
 - `scripts/10-fetch-llamacpp.sh` — add/init `third_party/llama.cpp` submodule. Use `LLAMACPP_REF` in `.env` to pin a specific commit.
-- `scripts/20-build-vulkan.sh`, `21-build-hip.sh` (placeholder) — platform build helpers.
+- `scripts/20-build-vulkan.sh`, `scripts/21-build-hip.sh` — platform build helpers.
 - `scripts/30-bench.sh` — runs `llama-bench`. Logs to `results/<timestamp>.log`. Configurable via `.env`:
    - `GGML_LOG_LEVEL`, `GGML_VK_VISIBLE_DEVICES`, `AMD_VULKAN_ICD`
    - `MODEL_DIR`, `MODEL`, `LLAMA_BENCH_BIN`, `RESULTS_DIR`
