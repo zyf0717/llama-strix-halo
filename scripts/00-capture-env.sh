@@ -8,13 +8,13 @@ default_results_dir="${repo_root}/results"
 
 cd "${repo_root}"
 
-results_dir="${RESULTS_DIR:-${default_results_dir}}"
+output_dir="${RUN_OUTPUT_DIR:-${RESULTS_DIR:-${default_results_dir}}}"
 output_file="${1:-${CAPTURE_ENV_OUT:-}}"
 run_kind="${RUN_KIND:-unknown}"
 run_timestamp="${RUN_TIMESTAMP:-$(date +%Y%m%d_%H%M%S)}"
 
 if [[ -z "${output_file}" ]]; then
-	output_file="${results_dir}/${run_timestamp}.env.txt"
+	output_file="${output_dir}/${run_timestamp}.env.txt"
 fi
 
 mkdir -p "$(dirname -- "${output_file}")"
@@ -48,6 +48,7 @@ maybe_run() {
 	write_kv "run_kind" "${run_kind}"
 	write_kv "run_timestamp" "${run_timestamp}"
 	write_kv "cwd" "${repo_root}"
+	write_kv "output_dir" "${RUN_OUTPUT_DIR:-$(dirname -- "${output_file}")}"
 	write_kv "log_file" "${RUN_LOG_FILE:-}"
 	write_kv "model" "${MODEL_PATH:-}"
 	write_kv "llama_bin" "${LLAMA_BIN_PATH:-}"
@@ -66,6 +67,7 @@ maybe_run() {
 	write_kv "GGML_LOG_LEVEL" "${GGML_LOG_LEVEL:-}"
 	write_kv "GGML_VK_VISIBLE_DEVICES" "${GGML_VK_VISIBLE_DEVICES:-}"
 	write_kv "LLAMA_CPP_BACKEND" "${LLAMA_CPP_BACKEND:-}"
+	write_kv "RESULTS_DIR" "${RESULTS_DIR:-}"
 	write_kv "MODEL_DIR" "${MODEL_DIR:-}"
 	write_kv "MODEL" "${MODEL:-}"
 	write_kv "LLAMACPP_REF" "${LLAMACPP_REF:-}"
@@ -77,6 +79,7 @@ maybe_run() {
 	write_kv "LLAMA_BENCH_UBATCH" "${LLAMA_BENCH_UBATCH:-}"
 	write_kv "LLAMA_BENCH_FA" "${LLAMA_BENCH_FA:-}"
 	write_kv "LLAMA_SERVER_BIN" "${LLAMA_SERVER_BIN:-}"
+	write_kv "LLAMA_SERVER_RESULTS_DIR" "${LLAMA_SERVER_RESULTS_DIR:-}"
 	write_kv "LLAMA_SERVER_NGL" "${LLAMA_SERVER_NGL:-}"
 	write_kv "LLAMA_SERVER_CTX" "${LLAMA_SERVER_CTX:-}"
 	write_kv "LLAMA_SERVER_THREADS" "${LLAMA_SERVER_THREADS:-}"

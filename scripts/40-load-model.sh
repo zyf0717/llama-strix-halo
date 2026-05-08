@@ -6,7 +6,7 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/.." && pwd)"
 default_model_dir="${repo_root}/models"
 default_model_name="gpt-oss-120b-MXFP4-00001-of-00002.gguf"
-default_results_dir="${repo_root}/results"
+default_logs_dir="${repo_root}/logs"
 capture_env_script="${repo_root}/scripts/00-capture-env.sh"
 
 source "${script_dir}/lib/load-env.sh"
@@ -27,7 +27,7 @@ else
 	llama_cpp_build_dir="$(resolve_llama_cpp_build_dir "${repo_root}" "${llama_cpp_backend}")"
 	llama_server_bin="${llama_cpp_build_dir}/bin/llama-server"
 fi
-results_dir="${RESULTS_DIR:-${default_results_dir}}"
+output_dir="${LLAMA_SERVER_RESULTS_DIR:-${RESULTS_DIR:-${default_logs_dir}}}"
 ngl="${LLAMA_SERVER_NGL:-999}"
 context_size="${LLAMA_SERVER_CTX:-130000}"
 threads="${LLAMA_SERVER_THREADS:-8}"
@@ -38,8 +38,8 @@ port="${LLAMA_SERVER_PORT:-1234}"
 alias_name="${LLAMA_SERVER_ALIAS:-OpenAI/gpt-oss-120b-MXFP4}"
 flash_attn="${LLAMA_SERVER_FLASH_ATTN:-on}"
 timestamp="$(date +%Y%m%d_%H%M%S)"
-log_file="${results_dir}/${timestamp}.log"
-capture_file="${results_dir}/${timestamp}.env.txt"
+log_file="${output_dir}/${timestamp}.log"
+capture_file="${output_dir}/${timestamp}.env.txt"
 
 if [[ ! -x "${llama_server_bin}" ]]; then
 	echo "llama-server binary not found or not executable: ${llama_server_bin}" >&2
@@ -51,7 +51,7 @@ if [[ ! -e "${model}" ]]; then
 	exit 1
 fi
 
-mkdir -p "${results_dir}"
+mkdir -p "${output_dir}"
 
 stop_previous_server() {
 	local pid
@@ -114,13 +114,16 @@ printf -v command_str '%q ' "${command[@]}"
 RUN_KIND=server \
 RUN_TIMESTAMP="${timestamp}" \
 RUN_LOG_FILE="${log_file}" \
+RUN_OUTPUT_DIR="${output_dir}" \
 MODEL_PATH="${model}" \
 LLAMA_BIN_PATH="${llama_server_bin}" \
 RUN_COMMAND="${command_str% }" \
 MODEL_DIR="${model_dir}" \
 MODEL="${model}" \
 LLAMA_CPP_BACKEND="${llama_cpp_backend}" \
+RESULTS_DIR="${RESULTS_DIR:-}" \
 LLAMA_SERVER_BIN="${llama_server_bin}" \
+LLAMA_SERVER_RESULTS_DIR="${output_dir}" \
 LLAMA_SERVER_NGL="${ngl}" \
 LLAMA_SERVER_CTX="${context_size}" \
 LLAMA_SERVER_THREADS="${threads}" \

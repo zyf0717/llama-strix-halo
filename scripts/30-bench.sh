@@ -69,12 +69,14 @@ printf -v command_str '%q ' "${command[@]}"
 RUN_KIND=bench \
 RUN_TIMESTAMP="${timestamp}" \
 RUN_LOG_FILE="${log_file}" \
+RUN_OUTPUT_DIR="${results_dir}" \
 MODEL_PATH="${model}" \
 LLAMA_BIN_PATH="${llama_bench_bin}" \
 RUN_COMMAND="${command_str% }" \
 MODEL_DIR="${model_dir}" \
 MODEL="${model}" \
 LLAMA_CPP_BACKEND="${llama_cpp_backend}" \
+RESULTS_DIR="${RESULTS_DIR:-}" \
 LLAMA_BENCH_BIN="${llama_bench_bin}" \
 LLAMA_BENCH_NGL="${ngl}" \
 LLAMA_BENCH_THREADS="${threads}" \
@@ -84,6 +86,8 @@ LLAMA_BENCH_UBATCH="${ubatch_size}" \
 LLAMA_BENCH_FA="${flash_attention}" \
 "${capture_env_script}" "${capture_file}" >/dev/null
 
+echo "logging benchmark output to ${log_file}"
+echo "env capture: ${capture_file}"
 "${command[@]}" 2>&1 | tee "${log_file}"
 
 exit "${PIPESTATUS[0]}"

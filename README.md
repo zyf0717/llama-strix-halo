@@ -12,7 +12,8 @@ llama-strix-halo/
 ├─ scripts/        # helper scripts for fetch/build/bench/serve
 ├─ prompts/
 ├─ models/         # tracked symlinks only (do NOT add large GGUF files here)
-├─ results/        # timestamped logs
+├─ results/        # benchmark output by default
+├─ logs/           # load-model output by default
 └─ third_party/
     └─ llama.cpp/   # git submodule (ggml/llama.cpp)
 ```
@@ -35,12 +36,12 @@ llama-strix-halo/
 
 5. Run benchmarks or serve models:
 
-    - Benchmark: `./scripts/30-bench.sh` (creates `results/YYYYMMDD_HHMMSS.log` and `results/YYYYMMDD_HHMMSS.env.txt`)
-    - Serve model: `./scripts/40-load-model.sh` (starts `llama-server` using `nohup`, logs to `results/` and writes a matching `.env.txt` capture)
+    - Benchmark: `./scripts/30-bench.sh` (creates `results/YYYYMMDD_HHMMSS.log` and `results/YYYYMMDD_HHMMSS.env.txt` by default; override with `RESULTS_DIR` if you want to move benchmark output)
+    - Serve model: `./scripts/40-load-model.sh` (starts `llama-server` using `nohup`; writes logs to `logs/` by default and can be redirected with `LLAMA_SERVER_RESULTS_DIR` or `RESULTS_DIR`)
 
 ## Scripts
 
-- `scripts/00-capture-env.sh` — captures run metadata, git state, runtime vars, and available system/GPU/Vulkan details into `results/<timestamp>.env.txt`.
+- `scripts/00-capture-env.sh` — captures run metadata, git state, runtime vars, and available system/GPU/Vulkan details into the active output directory as `<timestamp>.env.txt`.
 - `scripts/01-install-rocm-ubuntu.sh` — configures AMD ROCm apt repositories on Ubuntu and installs the HIP build packages. Set `INSTALL_FULL_ROCM=1` only when you want the full `rocm` meta-package.
 - `scripts/10-fetch-llamacpp.sh` — add/init `third_party/llama.cpp` submodule. Use `LLAMACPP_REF` in `.env` to pin a specific commit.
 - `scripts/20-build-vulkan.sh`, `scripts/21-build-hip.sh` — platform build helpers.
@@ -48,7 +49,7 @@ llama-strix-halo/
    - `GGML_LOG_LEVEL`, `GGML_VK_VISIBLE_DEVICES`, `AMD_VULKAN_ICD`
    - `MODEL_DIR`, `MODEL`, `LLAMA_BENCH_BIN`, `RESULTS_DIR`
 - `scripts/40-load-model.sh` — starts `llama-server` (backgrounded with `nohup`). Configurable via `.env`:
-   - `LLAMA_SERVER_BIN`, `LLAMA_SERVER_NGL`, `LLAMA_SERVER_CTX`, `LLAMA_SERVER_THREADS`, `LLAMA_SERVER_BATCH`, `LLAMA_SERVER_UBATCH`, `LLAMA_SERVER_HOST`, `LLAMA_SERVER_PORT`, `LLAMA_SERVER_ALIAS`, `LLAMA_SERVER_FLASH_ATTN`, `RESULTS_DIR`
+   - `LLAMA_SERVER_BIN`, `LLAMA_SERVER_RESULTS_DIR`, `LLAMA_SERVER_NGL`, `LLAMA_SERVER_CTX`, `LLAMA_SERVER_THREADS`, `LLAMA_SERVER_BATCH`, `LLAMA_SERVER_UBATCH`, `LLAMA_SERVER_HOST`, `LLAMA_SERVER_PORT`, `LLAMA_SERVER_ALIAS`, `LLAMA_SERVER_FLASH_ATTN`, `RESULTS_DIR`
 
 ## Models
 
@@ -83,6 +84,7 @@ llama-strix-halo/
 
 ## Logs
 
-- Benchmark and server output are written to `results/` with filenames in `YYYYMMDD_HHMMSS.log` format.
-- Each benchmark/server run also writes `results/YYYYMMDD_HHMMSS.env.txt` with the resolved command, model path, git revisions, runtime env, and available system diagnostics.
-- Use `tail -f results/<latest>.log` to inspect the live run output.
+- Benchmark output is written to `results/` by default with filenames in `YYYYMMDD_HHMMSS.log` format.
+- `load-model` output is written to `logs/` by default. Set `LLAMA_SERVER_RESULTS_DIR` to send those logs elsewhere; `RESULTS_DIR` remains a shared fallback if you explicitly prefer one common directory.
+- Each benchmark/server run also writes `<timestamp>.env.txt` alongside the log with the resolved command, model path, git revisions, runtime env, and available system diagnostics.
+- Use `tail -f <configured-output-dir>/<latest>.log` to inspect the live run output.
