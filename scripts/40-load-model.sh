@@ -37,9 +37,16 @@ host="${LLAMA_SERVER_HOST:-127.0.0.1}"
 port="${LLAMA_SERVER_PORT:-1234}"
 alias_name="${LLAMA_SERVER_ALIAS:-OpenAI/gpt-oss-120b-MXFP4}"
 flash_attn="${LLAMA_SERVER_FLASH_ATTN:-on}"
+server_extra_args_raw="${LLAMA_SERVER_EXTRA_ARGS:-}"
 timestamp="$(date +%Y%m%d_%H%M%S)"
 log_file="${output_dir}/${timestamp}.log"
 capture_file="${output_dir}/${timestamp}.env.txt"
+
+server_extra_args=()
+if [[ -n "${server_extra_args_raw}" ]]; then
+	# Allow simple space-delimited extra llama-server flags from .env.
+	read -r -a server_extra_args <<< "${server_extra_args_raw}"
+fi
 
 if [[ ! -x "${llama_server_bin}" ]]; then
 	echo "llama-server binary not found or not executable: ${llama_server_bin}" >&2
@@ -106,6 +113,7 @@ command=(
 	--port "${port}"
 	--jinja
 	-a "${alias_name}"
+	"${server_extra_args[@]}"
 	"$@"
 )
 
@@ -133,6 +141,7 @@ LLAMA_SERVER_HOST="${host}" \
 LLAMA_SERVER_PORT="${port}" \
 LLAMA_SERVER_ALIAS="${alias_name}" \
 LLAMA_SERVER_FLASH_ATTN="${flash_attn}" \
+LLAMA_SERVER_EXTRA_ARGS="${server_extra_args_raw}" \
 "${capture_env_script}" "${capture_file}" >/dev/null
 
 "${command[@]}" > "${log_file}" 2>&1 &

@@ -35,9 +35,16 @@ prompt_gen="${LLAMA_BENCH_PG:-256,128}"
 batch_size="${LLAMA_BENCH_BATCH:-2048}"
 ubatch_size="${LLAMA_BENCH_UBATCH:-1024}"
 flash_attention="${LLAMA_BENCH_FA:-1}"
+bench_extra_args_raw="${LLAMA_BENCH_EXTRA_ARGS:-}"
 timestamp="$(date +%Y%m%d_%H%M%S)"
 log_file="${results_dir}/${timestamp}.log"
 capture_file="${results_dir}/${timestamp}.env.txt"
+
+bench_extra_args=()
+if [[ -n "${bench_extra_args_raw}" ]]; then
+	# Allow simple space-delimited extra llama-bench flags from .env.
+	read -r -a bench_extra_args <<< "${bench_extra_args_raw}"
+fi
 
 if [[ ! -x "${llama_bench_bin}" ]]; then
 	echo "llama-bench binary not found or not executable: ${llama_bench_bin}" >&2
@@ -61,6 +68,7 @@ command=(
 	-ub "${ubatch_size}"
 	-fa "${flash_attention}"
 	-mmp 0
+	"${bench_extra_args[@]}"
 	"$@"
 )
 
@@ -84,6 +92,7 @@ LLAMA_BENCH_PG="${prompt_gen}" \
 LLAMA_BENCH_BATCH="${batch_size}" \
 LLAMA_BENCH_UBATCH="${ubatch_size}" \
 LLAMA_BENCH_FA="${flash_attention}" \
+LLAMA_BENCH_EXTRA_ARGS="${bench_extra_args_raw}" \
 "${capture_env_script}" "${capture_file}" >/dev/null
 
 echo "logging benchmark output to ${log_file}"
