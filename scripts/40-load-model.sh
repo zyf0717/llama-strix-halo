@@ -37,6 +37,15 @@ host="${LLAMA_SERVER_HOST:-127.0.0.1}"
 port="${LLAMA_SERVER_PORT:-1234}"
 alias_name="${LLAMA_SERVER_ALIAS:-OpenAI/gpt-oss-120b-MXFP4}"
 flash_attn="${LLAMA_SERVER_FLASH_ATTN:-on}"
+cache_type_k="${LLAMA_SERVER_CACHE_TYPE_K:-}"
+cache_type_v="${LLAMA_SERVER_CACHE_TYPE_V:-}"
+no_kv_offload="${LLAMA_SERVER_NO_KV_OFFLOAD:-}"
+cache_reuse="${LLAMA_SERVER_CACHE_REUSE:-}"
+enable_metrics="${LLAMA_SERVER_METRICS:-}"
+cache_prompt_enabled="${LLAMA_SERVER_CACHE_PROMPT:-}"
+n_parallel="${LLAMA_SERVER_PARALLEL:-}"
+cont_batching_enabled="${LLAMA_SERVER_CONT_BATCHING:-}"
+slots_endpoint="${LLAMA_SERVER_SLOTS_ENDPOINT:-}"
 server_extra_args_raw="${LLAMA_SERVER_EXTRA_ARGS:-}"
 timestamp="$(date +%Y%m%d_%H%M%S)"
 log_file="${output_dir}/${timestamp}.log"
@@ -46,6 +55,36 @@ server_extra_args=()
 if [[ -n "${server_extra_args_raw}" ]]; then
 	# Allow simple space-delimited extra llama-server flags from .env.
 	read -r -a server_extra_args <<< "${server_extra_args_raw}"
+fi
+
+# --- Server feature arguments (KV cache, batching, endpoints) ---
+server_feature_args=()
+if [[ -n "${cache_type_k}" ]]; then
+	server_feature_args+=(--cache-type-k "${cache_type_k}")
+fi
+if [[ -n "${cache_type_v}" ]]; then
+	server_feature_args+=(--cache-type-v "${cache_type_v}")
+fi
+if [[ "${no_kv_offload}" == "1" ]] || [[ "${no_kv_offload}" == "true" ]]; then
+	server_feature_args+=(--no-kv-offload)
+fi
+if [[ -n "${cache_reuse}" ]]; then
+	server_feature_args+=(--cache-reuse "${cache_reuse}")
+fi
+if [[ "${enable_metrics}" == "1" ]] || [[ "${enable_metrics}" == "true" ]]; then
+	server_feature_args+=(--metrics)
+fi
+if [[ "${cache_prompt_enabled}" == "0" ]] || [[ "${cache_prompt_enabled}" == "false" ]]; then
+	server_feature_args+=(--no-cache-prompt)
+fi
+if [[ -n "${n_parallel}" ]]; then
+	server_feature_args+=(--parallel "${n_parallel}")
+fi
+if [[ "${cont_batching_enabled}" == "0" ]] || [[ "${cont_batching_enabled}" == "false" ]]; then
+	server_feature_args+=(--no-cont-batching)
+fi
+if [[ "${slots_endpoint}" == "0" ]] || [[ "${slots_endpoint}" == "false" ]]; then
+	server_feature_args+=(--no-slots)
 fi
 
 if [[ ! -x "${llama_server_bin}" ]]; then
@@ -113,6 +152,7 @@ command=(
 	--port "${port}"
 	--jinja
 	-a "${alias_name}"
+	"${server_feature_args[@]}"
 	"${server_extra_args[@]}"
 	"$@"
 )
@@ -141,6 +181,15 @@ LLAMA_SERVER_HOST="${host}" \
 LLAMA_SERVER_PORT="${port}" \
 LLAMA_SERVER_ALIAS="${alias_name}" \
 LLAMA_SERVER_FLASH_ATTN="${flash_attn}" \
+LLAMA_SERVER_CACHE_TYPE_K="${cache_type_k}" \
+LLAMA_SERVER_CACHE_TYPE_V="${cache_type_v}" \
+LLAMA_SERVER_NO_KV_OFFLOAD="${no_kv_offload}" \
+LLAMA_SERVER_CACHE_REUSE="${cache_reuse}" \
+LLAMA_SERVER_METRICS="${enable_metrics}" \
+LLAMA_SERVER_CACHE_PROMPT="${cache_prompt_enabled}" \
+LLAMA_SERVER_PARALLEL="${n_parallel}" \
+LLAMA_SERVER_CONT_BATCHING="${cont_batching_enabled}" \
+LLAMA_SERVER_SLOTS_ENDPOINT="${slots_endpoint}" \
 LLAMA_SERVER_EXTRA_ARGS="${server_extra_args_raw}" \
 "${capture_env_script}" "${capture_file}" >/dev/null
 
