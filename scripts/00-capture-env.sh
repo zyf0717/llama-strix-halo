@@ -53,6 +53,8 @@ maybe_run() {
 	write_kv "model" "${MODEL_PATH:-}"
 	write_kv "llama_bin" "${LLAMA_BIN_PATH:-}"
 	write_kv "command" "${RUN_COMMAND:-}"
+	write_kv "server_id" "${LLAMA_SERVER_ID:-}"
+	write_kv "server_config" "${LLAMA_SERVER_CONFIG:-}"
 
 	write_section "git"
 	write_kv "repo_head" "$(git rev-parse HEAD 2>/dev/null || true)"
@@ -67,6 +69,8 @@ maybe_run() {
 	write_kv "GGML_LOG_LEVEL" "${GGML_LOG_LEVEL:-}"
 	write_kv "GGML_VK_VISIBLE_DEVICES" "${GGML_VK_VISIBLE_DEVICES:-}"
 	write_kv "LLAMA_CPP_BACKEND" "${LLAMA_CPP_BACKEND:-}"
+	write_kv "LLAMA_SERVER_ID" "${LLAMA_SERVER_ID:-}"
+	write_kv "LLAMA_SERVER_CONFIG" "${LLAMA_SERVER_CONFIG:-}"
 	write_kv "RESULTS_DIR" "${RESULTS_DIR:-}"
 	write_kv "MODEL_DIR" "${MODEL_DIR:-}"
 	write_kv "MODEL" "${MODEL:-}"

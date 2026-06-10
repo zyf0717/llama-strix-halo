@@ -6,6 +6,33 @@ trim_trailing_whitespace() {
 	printf '%s' "${value}"
 }
 
+strip_unquoted_inline_comment() {
+	local value="$1"
+	local i
+	local char
+	local prev
+
+	for ((i = 0; i < ${#value}; i++)); do
+		char="${value:i:1}"
+		if [[ "${char}" != "#" ]]; then
+			continue
+		fi
+
+		if [[ "${i}" -eq 0 ]]; then
+			printf '%s' ""
+			return
+		fi
+
+		prev="${value:i-1:1}"
+		if [[ "${prev}" =~ [[:space:]] ]]; then
+			trim_trailing_whitespace "${value:0:i}"
+			return
+		fi
+	done
+
+	printf '%s' "${value}"
+}
+
 resolve_llama_cpp_build_dir() {
 	local repo_root="$1"
 	local backend="${2:-hip}"
@@ -56,6 +83,7 @@ load_env_file() {
 		elif [[ "${value}" =~ ^\'(.*)\'[[:space:]]*$ ]]; then
 			value="${BASH_REMATCH[1]}"
 		else
+			value="$(strip_unquoted_inline_comment "${value}")"
 			value="$(trim_trailing_whitespace "${value}")"
 		fi
 
