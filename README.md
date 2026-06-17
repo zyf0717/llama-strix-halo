@@ -39,9 +39,10 @@ llama-strix-halo/
 5. Run benchmarks or serve server instances:
 
     - Benchmark: `./scripts/30-bench.sh` (creates `results/YYYYMMDD_HHMMSS.log` and `results/YYYYMMDD_HHMMSS.env.txt` by default; override with `RESULTS_DIR` if you want to move benchmark output)
-    - Restart both servers: `./scripts/40-restart-servers.sh`
+    - Restart all server instances: `./scripts/40-restart-servers.sh`
     - Restart primary only: `./scripts/40-restart-servers.sh primary` or `./scripts/41-restart-primary-server.sh`
     - Restart secondary only: `./scripts/40-restart-servers.sh secondary` or `./scripts/42-restart-secondary-server.sh`
+    - Restart utility only: `./scripts/40-restart-servers.sh utility` or `./scripts/44-restart-utility-server.sh`
 
 ## Scripts
 
@@ -52,15 +53,50 @@ llama-strix-halo/
 - `scripts/30-bench.sh` — runs `llama-bench`. Logs to `results/<timestamp>.log`. Configurable via `.env`:
    - `GGML_LOG_LEVEL`, `GGML_VK_VISIBLE_DEVICES`, `AMD_VULKAN_ICD`
    - `MODEL_DIR`, `MODEL`, `LLAMA_BENCH_BIN`, `RESULTS_DIR`
-- `scripts/40-restart-servers.sh` — restarts both servers by default, or one configured `llama-server` instance when passed a server ID.
+- `scripts/40-restart-servers.sh` — restarts `primary`, `secondary`, and `utility` by default, or one configured `llama-server` instance when passed a server ID.
 - `scripts/41-restart-primary-server.sh` — primary wrapper for `./scripts/40-restart-servers.sh primary`.
 - `scripts/42-restart-secondary-server.sh` — secondary wrapper for `./scripts/40-restart-servers.sh secondary`.
+- `scripts/44-restart-utility-server.sh` — utility wrapper for `./scripts/40-restart-servers.sh utility`.
 
 ## Server instances
 
-- `config/servers/primary.env` and `config/servers/secondary.env` are first-class peer configs. They are ignored by Git because they are local machine config.
-- Tracked examples live at `config/servers/primary.env.example` and `config/servers/secondary.env.example`; copy them to `config/servers/primary.env` and `config/servers/secondary.env` before launching on a fresh checkout.
-- Restarting one server only stops an existing `llama-server` process for the same binary and port, so `primary` and `secondary` can run concurrently.
+- `config/servers/primary.env`, `config/servers/secondary.env`, and `config/servers/utility.env` are first-class peer configs. They are ignored by Git because they are local machine config.
+- Tracked examples live at `config/servers/*.env.example`; copy them to matching `config/servers/*.env` files before launching on a fresh checkout.
+- Restarting one server only stops an existing `llama-server` process for the same binary and port, so `primary`, `secondary`, and `utility` can run concurrently.
+- Default ports are `utility=1233`, `primary=1234`, and `secondary=1235`.
+
+## User systemd service
+
+Install the templated user unit without `sudo`:
+
+```sh
+mkdir -p ~/.config/systemd/user
+ln -sf ~/repos/llama-strix-halo/deploy/systemd/user/llama-strix-halo@.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+```
+
+Start configured server instances:
+
+```sh
+systemctl --user enable --now llama-strix-halo@primary.service
+systemctl --user enable --now llama-strix-halo@secondary.service
+systemctl --user enable --now llama-strix-halo@utility.service
+```
+
+Inspect status and logs:
+
+```sh
+systemctl --user status llama-strix-halo@primary.service
+journalctl --user -u llama-strix-halo@primary.service -f
+```
+
+The service runs `scripts/43-run-server-foreground.sh <server-id>`, which delegates to the same server config path as the manual scripts: `config/servers/<server-id>.env`.
+
+To allow user services to start at boot without an interactive login session, enable linger once:
+
+```sh
+loginctl enable-linger "$USER"
+```
 
 ## Models
 
@@ -91,7 +127,7 @@ llama-strix-halo/
 
    ./scripts/40-restart-servers.sh secondary
 
-- The secondary server listens on `0.0.0.0:1235` with one `16K` slot by default. The primary server listens on `0.0.0.0:1234`.
+- The secondary server listens on `0.0.0.0:1235` with one `16K` slot by default. The primary server listens on `0.0.0.0:1234`; the utility server example uses `0.0.0.0:1233`.
 
 ## `.env` format
 

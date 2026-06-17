@@ -37,6 +37,7 @@ Examples:
   $(basename "$0")
   $(basename "$0") primary
   $(basename "$0") secondary
+  $(basename "$0") utility
 EOF
 }
 
@@ -82,6 +83,7 @@ stop_previous_server() {
 restart_server() (
 	local server_id="$1"
 	shift
+	local requested_foreground_mode="${LLAMA_SERVER_FOREGROUND:-}"
 
 	if [[ ! "${server_id}" =~ ^[A-Za-z0-9._-]+$ ]]; then
 		echo "invalid server id: ${server_id}" >&2
@@ -135,6 +137,7 @@ restart_server() (
 	cont_batching_enabled="${LLAMA_SERVER_CONT_BATCHING:-}"
 	slots_endpoint="${LLAMA_SERVER_SLOTS_ENDPOINT:-}"
 	server_extra_args_raw="${LLAMA_SERVER_EXTRA_ARGS:-}"
+	foreground_mode="${requested_foreground_mode:-${LLAMA_SERVER_FOREGROUND:-}}"
 	timestamp="$(date +%Y%m%d_%H%M%S)"
 	log_file="${output_dir}/${timestamp}.log"
 	capture_file="${output_dir}/${timestamp}.env.txt"
@@ -186,7 +189,9 @@ restart_server() (
 
 	mkdir -p "${output_dir}"
 
-	stop_previous_server "${llama_server_bin}" "${port}"
+	if [[ "${foreground_mode}" != "1" ]] && [[ "${foreground_mode}" != "true" ]]; then
+		stop_previous_server "${llama_server_bin}" "${port}"
+	fi
 
 	server_command=(
 		"${llama_server_bin}"
@@ -206,17 +211,25 @@ restart_server() (
 		"$@"
 	)
 
-	if command -v setsid >/dev/null 2>&1; then
-		launch_command=(nohup setsid "${server_command[@]}")
+	if [[ "${foreground_mode}" == "1" ]] || [[ "${foreground_mode}" == "true" ]]; then
+		launch_command=("${server_command[@]}")
 	else
-		launch_command=(nohup "${server_command[@]}")
+		if command -v setsid >/dev/null 2>&1; then
+			launch_command=(nohup setsid "${server_command[@]}")
+		else
+			launch_command=(nohup "${server_command[@]}")
+		fi
 	fi
 
 	printf -v command_str '%q ' "${launch_command[@]}"
+	run_log_file="${log_file}"
+	if [[ "${foreground_mode}" == "1" ]] || [[ "${foreground_mode}" == "true" ]]; then
+		run_log_file="stdout/stderr"
+	fi
 
 	RUN_KIND=server \
 	RUN_TIMESTAMP="${timestamp}" \
-	RUN_LOG_FILE="${log_file}" \
+	RUN_LOG_FILE="${run_log_file}" \
 	RUN_OUTPUT_DIR="${output_dir}" \
 	MODEL_PATH="${model}" \
 	LLAMA_BIN_PATH="${llama_server_bin}" \
@@ -251,6 +264,12 @@ restart_server() (
 	LLAMA_SERVER_EXTRA_ARGS="${server_extra_args_raw}" \
 	"${capture_env_script}" "${capture_file}" >/dev/null
 
+	if [[ "${foreground_mode}" == "1" ]] || [[ "${foreground_mode}" == "true" ]]; then
+		echo "${server_id} llama-server starting in foreground"
+		echo "env capture: ${capture_file}"
+		exec "${launch_command[@]}"
+	fi
+
 	"${launch_command[@]}" > "${log_file}" 2>&1 < /dev/null &
 	server_pid=$!
 
@@ -261,9 +280,16 @@ restart_server() (
 
 cd "${repo_root}"
 
+if [[ $# -eq 0 ]] && { [[ "${LLAMA_SERVER_FOREGROUND:-}" == "1" ]] || [[ "${LLAMA_SERVER_FOREGROUND:-}" == "true" ]]; }; then
+	usage >&2
+	echo "foreground mode requires a server id" >&2
+	exit 2
+fi
+
 if [[ $# -eq 0 ]]; then
 	restart_server primary
 	restart_server secondary
+	restart_server utility
 	exit 0
 fi
 

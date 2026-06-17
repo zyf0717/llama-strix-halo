@@ -1,0 +1,18 @@
+[Unit]
+Description=llama-strix-halo llama.cpp server (%i)
+Documentation=file:%h/repos/llama-strix-halo/README.md
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/repos/llama-strix-halo
+ExecStart=%h/repos/llama-strix-halo/scripts/43-run-server-foreground.sh %i
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
