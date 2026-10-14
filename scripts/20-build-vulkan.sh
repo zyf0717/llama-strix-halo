@@ -59,6 +59,7 @@ install_deps() {
     ca-certificates \
     curl \
     libcurl4-openssl-dev \
+    libssl-dev \
     vulkan-tools \
     libvulkan-dev \
     mesa-vulkan-drivers \
@@ -122,7 +123,7 @@ configure_build() {
   cmake -S "$LLAMA_DIR" -B "$BUILD_DIR" -G Ninja \
     -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
     -DGGML_VULKAN=ON \
-    -DLLAMA_CURL=ON
+    -DLLAMA_OPENSSL=ON
 
   echo
 }
@@ -130,7 +131,7 @@ configure_build() {
 compile_build() {
   echo "Building llama.cpp Vulkan backend..."
 
-  cmake --build "$BUILD_DIR" --config "$BUILD_TYPE" -j"$(nproc)"
+  cmake --build "$BUILD_DIR" --config "$BUILD_TYPE" --parallel "${BUILD_JOBS:-$(nproc)}"
 
   echo
 }

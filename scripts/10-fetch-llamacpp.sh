@@ -6,7 +6,7 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "${script_dir}/.." && pwd)"
 submodule_path="third_party/llama.cpp"
 submodule_url="https://github.com/ggml-org/llama.cpp"
-default_llamacpp_ref="0dedb9ef7a71fcebfa6fb17e0d6e6abd6e893376"
+default_llamacpp_ref="318a471a6295e53bfce7ca96ae0cf26071cbdd6e"
 
 source "${script_dir}/lib/load-env.sh"
 

@@ -19,7 +19,6 @@ set -euo pipefail
 #   DRY_RUN=1 ./scripts/21-build-hip.sh
 #   BUILD_TYPE=RelWithDebInfo ./scripts/21-build-hip.sh
 #   AMDGPU_TARGETS="gfx1151" ./scripts/21-build-hip.sh
-#   ENABLE_ROCWMMA_FATTN=OFF ./scripts/21-build-hip.sh
 #   ENABLE_HIP_MMQ_MFMA=OFF ./scripts/21-build-hip.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,11 +36,10 @@ DRY_RUN="${DRY_RUN:-0}"
 # Override if building for another AMD GPU.
 AMDGPU_TARGETS="${AMDGPU_TARGETS:-gfx1151}"
 
-ENABLE_ROCWMMA_FATTN="${ENABLE_ROCWMMA_FATTN:-ON}"
 ENABLE_HIP_MMQ_MFMA="${ENABLE_HIP_MMQ_MFMA:-ON}"
 ENABLE_BACKEND_DL="${ENABLE_BACKEND_DL:-ON}"
 ENABLE_CPU_VARIANTS="${ENABLE_CPU_VARIANTS:-ON}"
-ENABLE_LLAMA_CURL="${ENABLE_LLAMA_CURL:-ON}"
+ENABLE_LLAMA_OPENSSL="${ENABLE_LLAMA_OPENSSL:-ON}"
 
 run() {
 	printf '+'
@@ -67,11 +65,10 @@ require_on_off() {
 }
 
 validate_config() {
-	require_on_off ENABLE_ROCWMMA_FATTN "$ENABLE_ROCWMMA_FATTN"
 	require_on_off ENABLE_HIP_MMQ_MFMA "$ENABLE_HIP_MMQ_MFMA"
 	require_on_off ENABLE_BACKEND_DL "$ENABLE_BACKEND_DL"
 	require_on_off ENABLE_CPU_VARIANTS "$ENABLE_CPU_VARIANTS"
-	require_on_off ENABLE_LLAMA_CURL "$ENABLE_LLAMA_CURL"
+	require_on_off ENABLE_LLAMA_OPENSSL "$ENABLE_LLAMA_OPENSSL"
 
 	case "$BUILD_TYPE" in
 		Release|RelWithDebInfo|Debug|MinSizeRel) ;;
@@ -88,11 +85,10 @@ echo "Build dir:              $BUILD_DIR"
 echo "Build type:             $BUILD_TYPE"
 echo "DRY_RUN:                $DRY_RUN"
 echo "AMDGPU_TARGETS:         $AMDGPU_TARGETS"
-echo "rocWMMA FlashAttention: $ENABLE_ROCWMMA_FATTN"
 echo "HIP MMQ MFMA:           $ENABLE_HIP_MMQ_MFMA"
 echo "Backend DL:             $ENABLE_BACKEND_DL"
 echo "CPU variants:           $ENABLE_CPU_VARIANTS"
-echo "LLAMA_CURL:             $ENABLE_LLAMA_CURL"
+echo "LLAMA_OPENSSL:          $ENABLE_LLAMA_OPENSSL"
 echo
 
 setup_rocm_env() {
@@ -209,13 +205,12 @@ configure_build() {
 		-DGGML_HIP=ON
 		-DAMDGPU_TARGETS="$AMDGPU_TARGETS"
 
-		-DGGML_HIP_ROCWMMA_FATTN="$ENABLE_ROCWMMA_FATTN"
 		-DGGML_HIP_MMQ_MFMA="$ENABLE_HIP_MMQ_MFMA"
 
 		-DGGML_BACKEND_DL="$ENABLE_BACKEND_DL"
 		-DGGML_CPU_ALL_VARIANTS="$ENABLE_CPU_VARIANTS"
 
-		-DLLAMA_CURL="$ENABLE_LLAMA_CURL"
+		-DLLAMA_OPENSSL="$ENABLE_LLAMA_OPENSSL"
 		-DLLAMA_BUILD_TESTS=OFF
 	)
 
@@ -231,7 +226,7 @@ configure_build() {
 compile_build() {
 	echo "Building llama.cpp HIP backend..."
 
-	run cmake --build "$BUILD_DIR" --config "$BUILD_TYPE" --parallel "$(nproc)"
+	run cmake --build "$BUILD_DIR" --config "$BUILD_TYPE" --parallel "${BUILD_JOBS:-$(nproc)}"
 
 	echo
 }
@@ -271,8 +266,6 @@ print_result() {
 	echo "  - Strix Halo target should usually be: AMDGPU_TARGETS=gfx1151"
 	echo "  - Verify ROCm/HIP drivers with: rocminfo && hipcc --version"
 	echo "  - To select devices, set: HIP_VISIBLE_DEVICES or ROCM_VISIBLE_DEVICES"
-	echo "  - If rocWMMA causes build/runtime issues, retry:"
-	echo "      CLEAN=1 ENABLE_ROCWMMA_FATTN=OFF ./scripts/21-build-hip.sh"
 	echo "  - If MMQ/MFMA causes issues, retry:"
 	echo "      CLEAN=1 ENABLE_HIP_MMQ_MFMA=OFF ./scripts/21-build-hip.sh"
 	echo
