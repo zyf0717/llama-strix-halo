@@ -34,7 +34,7 @@ threads="${LLAMA_BENCH_THREADS:-8}"
 prompt_gen="${LLAMA_BENCH_PG:-256,128}"
 batch_size="${LLAMA_BENCH_BATCH:-2048}"
 ubatch_size="${LLAMA_BENCH_UBATCH:-1024}"
-flash_attention="${LLAMA_BENCH_FA:-1}"
+flash_attention="${LLAMA_BENCH_FA:-on}"
 bench_extra_args_raw="${LLAMA_BENCH_EXTRA_ARGS:-}"
 timestamp="$(date +%Y%m%d_%H%M%S)"
 log_file="${results_dir}/${timestamp}.log"
@@ -67,7 +67,7 @@ command=(
 	-b "${batch_size}"
 	-ub "${ubatch_size}"
 	-fa "${flash_attention}"
-	-mmp 0
+	-lm none
 	"${bench_extra_args[@]}"
 	"$@"
 )
